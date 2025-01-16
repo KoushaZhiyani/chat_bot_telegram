@@ -5,7 +5,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from g import UnitSelection  # جایگزین با نام فایل شما
 
 # توکن بات تلگرام
-TOKEN = '7805910107:AAGOnv683DmFwzTkphdr--BJB7U-QaqPIqM'
+TOKEN = '7805910107:AAGOnv7523WFwzTkphdr--BJB7U-QaqPIqM'
 
 # مسیر فایل CSV
 CSV_FILE_PATH = 'Book.csv'
