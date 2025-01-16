@@ -5,12 +5,12 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from g import UnitSelection  # جایگزین با نام فایل شما
 
 # توکن بات تلگرام
-TOKEN = '7805910107:AAGOnv7523WFwzTkphdr--BJB7U-QaqPIqM'
+TOKEN = '7805910107:AAGOnv7523WFwzTkphrd--BJB7U-QaqIPqM'
 
 # مسیر فایل CSV
 CSV_FILE_PATH = 'Book.csv'
 
-ADMIN_USER_ID = 439165916  # شناسه کاربری تلگرام خود را اینجا قرار دهید
+ADMIN_USER_ID = 4391665721  # شناسه کاربری تلگرام خود را اینجا قرار دهید
 
 
 # ذخیره وضعیت کاربران
