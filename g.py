@@ -44,16 +44,8 @@ class UnitSelection:
         self.values_dict = self.values_dict_gen(self.dt)
         self.selector(self.values_dict)
         if not self.flag:
-            self.df_matrix.to_csv('all-matrix12.csv', index=False, encoding='utf-8-sig')
-            self.df_matrix_course.to_csv('all-record12.csv', index=False, encoding='utf-8-sig')
             sorted_list = self.evaluate_matrix()
             self.print_matrix(sorted_list)
-        else:
-            path_name = f'{self.id}-all-situations.csv'
-            self.df_matrix_course.to_csv(path_name, index=False, encoding='utf-8-sig')
-            print('*'*100)
-            print(f'All situations created. \nFile name: {path_name} \nFile path: {os.path.abspath(path_name)}')
-            print('*'*100)
 
 
 
@@ -343,15 +335,14 @@ class UnitSelection:
             filtered_dt = self.dt[(self.dt['درس'] == course) & (self.dt['استاد'] == name_pro)]
             filtered_rows = pd.concat([filtered_rows, filtered_dt], ignore_index=True)
 
-        new_unit_selection = UnitSelection(filtered_rows, flag=True, id=id)
-        return new_unit_selection.print_matrix(new_unit_selection.evaluate_matrix())
+        new_unit_selection = UnitSelection(data=filtered_rows, flag=True, id=id)
+
+        return new_unit_selection.df_matrix_course
 
 
-dt = pd.read_csv('Book2.csv', encoding='windows-1256')
 
 
 
-unit_select_obj = UnitSelection(dt)
 
 end_time = time.time()
 print(end_time-srt_time)
