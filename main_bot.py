@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from g import UnitSelection  # جایگزین با نام فایل شما
+from algorithm import UnitSelection  # جایگزین با نام فایل شما
 
 # توکن بات تلگرام
 TOKEN = '7805910107:AAGOnv7523WFwzTkphrd--BJB7U-QaqIPqM'
@@ -45,7 +45,7 @@ async def receive_csv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 async def process_csv(file_path: str, update: Update) -> None:
     try:
         # خواندن داده‌ها از فایل CSV
-        df = pd.read_csv(file_path, encoding='windows-1256')
+        df = pd.read_excel(file_path)
         user_id = update.message.from_user.id
 
         # بررسی و تنظیم مقدار پیش‌فرض برای کاربر در user_states
@@ -112,7 +112,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def search_more(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     username = update.message.from_user.username or f"user_{user_id}"
-
     # بررسی وجود اطلاعات برای کاربر
     if user_id not in user_states or "programs" not in user_states[user_id]:
         await update.message.reply_text("ابتدا فایل CSV خود را ارسال کنید تا برنامه‌ای ایجاد شود.")
@@ -130,18 +129,23 @@ async def search_more(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     unit_select_obj = state["unit_select_obj"]
     courses = unit_select_obj.df_matrix_course[unit_select_obj.df_matrix_course['id'] == current_index]
 
+
     try:
         # تولید فایل جدید با استفاده از all_model
         results_file = unit_select_obj.all_model(courses, current_index)
+
         if isinstance(results_file, list):
             results_file = pd.DataFrame(results_file)
-
         # تنظیم نام فایل بر اساس نام کاربری
         file_name = f"@{username}-{current_index}-all-situations.csv"
 
         # ذخیره فایل
         file_path = f"./{file_name}"
-        results_file.to_csv(file_path, index=False, encoding="utf-8")
+        results_file.to_csv(file_path, index=False, encoding='utf-8-sig')
+        print('*' * 100)
+        print(f'All situations created. \nFile name: {file_name} \nFile path: {os.path.abspath(file_name)}')
+        print('*' * 100)
+
 
         # ارسال فایل به کاربر
         await update.message.reply_document(document=open(file_path, 'rb'), filename=file_name)
