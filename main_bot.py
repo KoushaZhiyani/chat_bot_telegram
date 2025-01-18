@@ -3,18 +3,36 @@ import pandas as pd
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from algorithm import UnitSelection  # جایگزین با نام فایل شما
+import nest_asyncio
+
+nest_asyncio.apply()  # فعال‌سازی اصلاح حلقه رویداد
 
 # توکن بات تلگرام
-TOKEN = '7805910107:AAGOnv7523WFwzTkphrd--BJB7U-QaqIPqM'
+TOKEN = '780'
 
 # مسیر فایل CSV
-CSV_FILE_PATH = 'Book.csv'
+CSV_FILE_PATH = 'received_file.xlsx'
 
-ADMIN_USER_ID = 4391665721  # شناسه کاربری تلگرام خود را اینجا قرار دهید
+ADMIN_USER_ID = 4  # شناسه کاربری تلگرام خود را اینجا قرار دهید
+
+ALL_CRS_FILE_PATH = 'all_crs.xlsx'
 
 
 # ذخیره وضعیت کاربران
 user_states = {}
+
+
+
+# ارسال فایل all_crs.xlsx
+async def send_all_crs(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    try:
+        with open(ALL_CRS_FILE_PATH, 'rb') as file:
+            await update.message.reply_document(document=file, filename=os.path.basename(ALL_CRS_FILE_PATH))
+    except FileNotFoundError:
+        await update.message.reply_text("فایل موردنظر یافت نشد.")
+    except Exception as e:
+        await update.message.reply_text(f"خطا در ارسال فایل: {e}")
+
 
 # ارسال فایل CSV
 async def send_csv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -36,9 +54,10 @@ async def receive_csv(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     document = update.message.document
     if document:
         new_file = await document.get_file()
-        await new_file.download_to_drive('received_file.csv')
+        await new_file.download_to_drive('received_file.xlsx')
         await update.message.reply_text("فایل دریافت شد. در حال پردازش ...")
-        await process_csv('received_file.csv', update)
+        await process_csv('received_file.xlsx', update)
+
 
 
 # پردازش فایل CSV با استفاده از UnitSelection
@@ -46,6 +65,7 @@ async def process_csv(file_path: str, update: Update) -> None:
     try:
         # خواندن داده‌ها از فایل CSV
         df = pd.read_excel(file_path)
+
         user_id = update.message.from_user.id
 
         # بررسی و تنظیم مقدار پیش‌فرض برای کاربر در user_states
@@ -137,11 +157,11 @@ async def search_more(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         if isinstance(results_file, list):
             results_file = pd.DataFrame(results_file)
         # تنظیم نام فایل بر اساس نام کاربری
-        file_name = f"@{username}-{current_index}-all-situations.csv"
+        file_name = f"@{username}-{current_index}-all-situations.xlsx"
 
         # ذخیره فایل
         file_path = f"./{file_name}"
-        results_file.to_csv(file_path, index=False, encoding='utf-8-sig')
+        results_file.to_excel(file_path, index=False)
         print('*' * 100)
         print(f'All situations created. \nFile name: {file_name} \nFile path: {os.path.abspath(file_name)}')
         print('*' * 100)
@@ -234,6 +254,7 @@ def main():
     # افزودن هندلرها
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("file", send_all_crs))
     application.add_handler(CommandHandler("setmethod", set_method))
     application.add_handler(CommandHandler("getcsv", send_csv))
     application.add_handler(CommandHandler("next", send_next_program))
@@ -241,6 +262,7 @@ def main():
     application.add_handler(CommandHandler("end", end))
     application.add_handler(MessageHandler(filters.Document.ALL, receive_csv))
     application.add_handler(CommandHandler("activeusers", active_users_count))
+
 
     application.run_polling()
 
