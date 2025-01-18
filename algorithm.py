@@ -29,6 +29,7 @@ class UnitSelection:
             self.day_coff, self.gap_coff, self.pr_coff = 10, 10, 10
 
         self.select_method(method=method, day_coff=self.day_coff, gap_coff=self.gap_coff, pr_coff=self.pr_coff)
+
         self.main_run()
         self.values_dict = None
 
@@ -40,25 +41,22 @@ class UnitSelection:
 
     def main_run(self):
         self.dt = self.dt.apply(self.fill_score, axis=1)
-        self.dt['درس'] = self.index_trim(self.dt['درس'])
+
+        self.dt['نام درس'] = self.index_trim(self.dt['نام درس'])
+
         self.values_dict = self.values_dict_gen(self.dt)
+
         self.selector(self.values_dict)
-        if not self.flag:
-            sorted_list = self.evaluate_matrix()
-            self.print_matrix(sorted_list)
-
-
-
 
 
 
     def fill_score(self, row):
-        if pd.isna(row['امت?از']):
-            dt_gp = self.dt.groupby(by='درس').agg({'امت?از': 'mean'})
-            if not pd.isna(dt_gp['امت?از'][dt_gp.index == row['درس']].values[0]):
-                row['امت?از'] = dt_gp['امت?از'][dt_gp.index == row['درس']].values[0]
+        if pd.isna(row['امتیاز']):
+            dt_gp = self.dt.groupby(by='نام درس').agg({'امتیاز': 'mean'})
+            if not pd.isna(dt_gp['امتیاز'][dt_gp.index == row['نام درس']].values[0]):
+                row['امتیاز'] = dt_gp['امتیاز'][dt_gp.index == row['نام درس']].values[0]
             else:
-                row['امت?از'] = 5
+                row['امتیاز'] = 5
         return row
 
 
@@ -66,7 +64,7 @@ class UnitSelection:
     def values_dict_gen(data):
         values_dict = defaultdict(list)
         for indx, row in data.iterrows():
-            values_dict[row[0]].append((row[1], row[2], row[3]))
+            values_dict[row[0]].append((row[1], row[2], row[3], row[4]))
         return values_dict
 
 
@@ -223,12 +221,12 @@ class UnitSelection:
         index_class = list(class_list.keys())
 
         if i >= len(index_class):
+
             dt_temp = pd.DataFrame(self.base_table)
 
+            selected = ((data[0], data[1][0], data[1][1], data[1][2], data[1][3])for data in selected)
+            dt_temp_course = pd.DataFrame(selected, columns=['Course', 'Schedule', 'Score', 'Name_pro', 'CODE_Course'])
 
-            selected = ((data[0], data[1][0], data[1][1], data[1][2])for data in selected)
-
-            dt_temp_course = pd.DataFrame(selected, columns=['Course', 'Schedule', 'Score', 'Name_pro'])
             dt_temp['id'] = self.c + 1
             dt_temp_course['id'] = self.c + 1
             self.c += 1
@@ -293,7 +291,7 @@ class UnitSelection:
         id_table = 0
         for table in range(0, self.df_matrix.shape[0], 6):
             id_table += 1
-            mean_score_local_matrix = self.df_matrix_course[self.df_matrix_course['id'] == id_table]['Score'].mean()
+            mean_score_local_matrix = 10 - self.df_matrix_course[self.df_matrix_course['id'] == id_table]['Score'].mean()
 
             point = self.fitness_function(self.df_matrix.iloc[table:table + 6, :6], mean_score_local_matrix)
             point_list.append((id_table, point))
@@ -314,27 +312,30 @@ class UnitSelection:
             messages.append(minimum_table.to_string())
             # جزئیات دوره‌ها
             course = self.df_matrix_course[self.df_matrix_course['id'] == program_id][
-                ['Course', 'Schedule', 'Score', 'Name_pro']]
+                ['Course', 'Schedule', 'Score', 'Name_pro', 'CODE_Course']]
             for detail in course.itertuples():
 
                 messages.append(f"Course: {detail.Course}")
                 messages.append(f"Time: {detail.Schedule}")
                 messages.append(f"Score: {detail.Score}")
                 messages.append(f"Name Pro: {self.standardize_persian_text(detail.Name_pro, flag=False)}")
+                messages.append(f"CODE Course: {detail.CODE_Course}")
                 messages.append('-'*10)
             programs.append('\n'.join(messages))
         return programs
 
     def all_model(self, courses, id):
         filtered_rows = pd.DataFrame()
-
         for _, record in courses.iterrows():
+
             course = record['Course']
             name_pro = record['Name_pro']
 
-            filtered_dt = self.dt[(self.dt['درس'] == course) & (self.dt['استاد'] == name_pro)]
-            filtered_rows = pd.concat([filtered_rows, filtered_dt], ignore_index=True)
 
+            filtered_dt = self.dt[(self.dt['نام درس'] == course) & (self.dt['استاد'] == name_pro)]
+  
+            filtered_rows = pd.concat([filtered_rows, filtered_dt], ignore_index=True)
+        print(filtered_rows)
         new_unit_selection = UnitSelection(data=filtered_rows, flag=True, id=id)
 
         return new_unit_selection.df_matrix_course
